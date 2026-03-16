@@ -1,14 +1,12 @@
 import React from "react";
 import HeroSlider from "../../components/home/HeroSlider";
-import ProjectList from "../../components/project/ProjectList";
+import LandingSections from "../../components/home/LandingSections";
 
 const Home = () => {
   return (
-    <div className="bg-stone-950">
+    <div className="bg-[#0c0d10] text-white">
       <HeroSlider />
-      <section className="bg-white">
-        <ProjectList />
-      </section>
+      <LandingSections />
     </div>
   );
 };

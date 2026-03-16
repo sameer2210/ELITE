@@ -14,12 +14,21 @@ const normalizeArrayParam = (value) => {
   return value;
 };
 
-const buildParams = ({ search, page, limit, start, populate, filters } = {}) => {
+const buildParams = ({
+  search,
+  page,
+  limit,
+  start,
+  populate,
+  filters,
+  sort,
+} = {}) => {
   const params = {};
   if (search) params.q = search;
   if (typeof start === "number") params._start = start;
   if (typeof limit === "number") params._limit = limit;
   if (typeof page === "number") params.page = page;
+  if (sort) params.sort = sort;
 
   const populateValue = normalizeArrayParam(populate);
   if (populateValue) params.populate = populateValue;
@@ -41,10 +50,11 @@ const fetchProjects = async ({
   start,
   populate,
   filters,
+  sort,
   signal,
 }) => {
   const { data } = await http.get("/api/projects", {
-    params: buildParams({ search, page, limit, start, populate, filters }),
+    params: buildParams({ search, page, limit, start, populate, filters, sort }),
     signal,
   });
   return data;
@@ -57,12 +67,25 @@ export const useProjects = ({
   start,
   populate = DEFAULT_POPULATE,
   filters,
+  sort,
   enabled = true,
 } = {}) =>
   useQuery({
-    queryKey: ["projects", { search, page, limit, start, populate, filters }],
+    queryKey: [
+      "projects",
+      { search, page, limit, start, populate, filters, sort },
+    ],
     queryFn: ({ signal }) =>
-      fetchProjects({ search, page, limit, start, populate, filters, signal }),
+      fetchProjects({
+        search,
+        page,
+        limit,
+        start,
+        populate,
+        filters,
+        sort,
+        signal,
+      }),
     enabled,
   });
 
@@ -155,4 +178,3 @@ export const useDeleteProject = () => {
     },
   });
 };
-
