@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from "react";
 import { NavLink } from "react-router-dom";
+import { getPrimaryImage } from "../../utils/projectImages";
 
 const normalizeList = (value) => {
   if (!value) return [];
@@ -44,11 +45,12 @@ const ProjectSearchResults = ({
       );
       const awards = normalizeList(item.awards || item.badges);
       const image =
-        item.image ||
-        item.thumbnail ||
-        item.cover ||
-        item.images?.[0] ||
-        "https://via.placeholder.com/96";
+        getPrimaryImage(
+          item.image,
+          item.thumbnail,
+          item.cover,
+          item.images
+        ) || "https://via.placeholder.com/96";
       return {
         id,
         title,

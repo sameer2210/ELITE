@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { asyncupdateuser } from "../../store/actions/userActions";
 import { Link } from "react-router-dom";
+import { getPrimaryImage } from "../../utils/projectImages";
 
 const Carts = () => {
   const dispatch = useDispatch();
@@ -29,7 +30,10 @@ const Carts = () => {
         if (!item?.product) return null;
 
         const project = item.product;
-        const { image, title, id, category } = project;
+        const { title, id, category } = project;
+        const image =
+          getPrimaryImage(project?.image, project?.images) ||
+          "https://via.placeholder.com/120";
 
         return (
           <div

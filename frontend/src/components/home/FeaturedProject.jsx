@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProjects } from "../../api/projects";
+import { getPrimaryImage } from "../../utils/projectImages";
 
 const FeaturedProject = () => {
   const shouldReduceMotion = useReducedMotion();
@@ -21,7 +22,7 @@ const FeaturedProject = () => {
         .filter(Boolean)
         .slice(0, 4)
     : [];
-  const image = project?.images?.[0] || project?.image;
+  const image = getPrimaryImage(project?.image, project?.images);
 
   const sectionMotion = shouldReduceMotion
     ? {}

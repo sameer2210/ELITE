@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -14,6 +15,20 @@ const ProjectCreate = () => {
   const { mutateAsync: createProject, isPending } = useCreateProject();
   const { data: categories = [] } = useCategories();
   const { data: technologies = [] } = useTechnologies();
+
+  const defaultValues = useMemo(
+    () => ({
+      image: "",
+      images: [""],
+      title: "",
+      description: "",
+      category: "",
+      technologies: [],
+      liveDemo: "",
+      githubRepo: "",
+    }),
+    []
+  );
 
   const canCreate = user?.isAdmin || user?.role === "developer";
 
@@ -60,21 +75,13 @@ const ProjectCreate = () => {
         {/* Form Card */}
         <div>
           <ProjectForm
-            defaultValues={{
-              coverImage: "",
-              gallery: "",
-              title: "",
-              description: "",
-              category: "",
-              technologies: [],
-              liveDemo: "",
-              githubRepo: "",
-            }}
+            defaultValues={defaultValues}
             onSubmit={handleCreate}
             isEdit={false}
             loading={isPending}
             categories={categories}
             technologies={technologies}
+            seedable
           />
         </div>
       </div>

@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Eye, Github, Heart } from "lucide-react";
+import { getPrimaryImage } from "../../utils/projectImages";
 
 const ProjectCard = ({ p }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const image =
-    p?.images?.[0] ||
-    p?.image ||
+    getPrimaryImage(p?.image, p?.images) ||
     "https://via.placeholder.com/600x450?text=Project+Preview";
   const title = p?.title || "Untitled Project";
   const description = p?.description || "No description available.";

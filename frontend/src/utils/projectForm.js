@@ -18,14 +18,31 @@ const parseList = (value) => {
     .filter(Boolean);
 };
 
+const normalizeImageList = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item?.url) return item.url;
+        if (item?.value) return item.value;
+        return "";
+      })
+      .filter(Boolean);
+  }
+  return parseList(value);
+};
+
 const unique = (items) => Array.from(new Set(items));
 
 export const buildProjectPayload = (formData = {}) => {
   const title = formData.title?.trim() || "";
   const description = formData.description?.trim() || "";
 
-  const coverImage = formData.coverImage?.trim();
-  const gallery = parseList(formData.gallery);
+  const coverImage = formData.image?.trim() || formData.coverImage?.trim();
+  const gallerySource =
+    formData.images !== undefined ? formData.images : formData.gallery;
+  const gallery = normalizeImageList(gallerySource);
   const images = unique(
     [coverImage, ...gallery].map((value) => value?.trim()).filter(Boolean)
   );
@@ -75,15 +92,19 @@ export const buildProjectFormDefaults = (project = {}) => {
     .filter(Boolean)
     .filter(isValidObjectId);
 
-  return {
+  const defaults = {
     title: project.title || "",
     description: project.description || "",
-    coverImage: rawImages[0] || "",
-    gallery: rawImages.slice(1).join(", "),
+    image: rawImages[0] || "",
+    images: rawImages.slice(1),
     category: isValidObjectId(categoryId) ? categoryId : "",
     technologies,
     liveDemo: project.liveDemo || "",
     githubRepo: project.githubRepo || "",
   };
-};
 
+  defaults.coverImage = defaults.image;
+  defaults.gallery = defaults.images.join(", ");
+
+  return defaults;
+};

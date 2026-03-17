@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProjects } from "../../api/projects";
+import { getPrimaryImage } from "../../utils/projectImages";
 
 const awardLabel = (award) => {
   if (!award) return null;
@@ -57,7 +58,7 @@ const TrendingProjects = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {projects.map((project) => {
             const projectId = project?.id || project?._id;
-            const image = project?.images?.[0] || project?.image;
+            const image = getPrimaryImage(project?.image, project?.images);
             const title = project?.title || "Untitled Project";
             const developer =
               project?.developerId?.name ||

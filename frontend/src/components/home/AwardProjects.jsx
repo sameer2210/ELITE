@@ -3,6 +3,7 @@ import { Award, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { useAwards } from "../../api/awards";
+import { getPrimaryImage } from "../../utils/projectImages";
 
 const formatAward = (award) => {
   if (!award) return null;
@@ -75,7 +76,7 @@ const AwardProjects = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {featured.map(({ project, awards }) => {
             const projectId = project?.id || project?._id;
-            const image = project?.images?.[0] || project?.image;
+            const image = getPrimaryImage(project?.image, project?.images);
             const title = project?.title || "Awarded Project";
             const description = project?.description;
             return (

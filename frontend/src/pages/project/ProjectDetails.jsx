@@ -12,6 +12,7 @@ import {
 } from "../../api/projects";
 import { useCategories, useTechnologies } from "../../api/lookups";
 import { buildProjectFormDefaults, buildProjectPayload } from "../../utils/projectForm";
+import { getPrimaryImage, normalizeImageList } from "../../utils/projectImages";
 import { ArrowLeft, ExternalLink, Github } from "lucide-react";
 
 const ProjectDetails = () => {
@@ -49,9 +50,7 @@ const ProjectDetails = () => {
 
   const imageList = useMemo(() => {
     if (!project) return [];
-    if (Array.isArray(project.images) && project.images.length) return project.images;
-    if (project.image) return [project.image];
-    return [];
+    return normalizeImageList(project.image, project.images);
   }, [project]);
 
   const techStack = useMemo(() => {
@@ -84,7 +83,11 @@ const ProjectDetails = () => {
       toast.success("Project updated!");
     } catch (error) {
       console.log("Error updating project:", error);
-      toast.error("Failed to update project.");
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update project."
+      );
     }
   };
 
@@ -161,15 +164,15 @@ const ProjectDetails = () => {
                 {/* Project Images */}
                 <div>
                   <div className="bg-gray-100 rounded-lg p-4">
-                    <img
-                      src={
-                        imageList[selectedImage] ||
-                        "https://via.placeholder.com/400"
-                      }
-                      alt={project.title}
-                      className="w-full h-80 object-cover rounded"
-                      onError={(e) => (e.target.src = "https://via.placeholder.com/400")}
-                    />
+                      <img
+                        src={
+                          imageList[selectedImage] ||
+                          "https://via.placeholder.com/400"
+                        }
+                        alt={project.title}
+                        className="w-full h-80 object-cover rounded"
+                        onError={(e) => (e.target.src = "https://via.placeholder.com/400")}
+                      />
                   </div>
                   {imageList.length > 1 && (
                     <div className="flex gap-2 mt-2">
@@ -280,8 +283,7 @@ const ProjectDetails = () => {
                     >
                       <img
                         src={
-                          item.images?.[0] ||
-                          item.image ||
+                          getPrimaryImage(item?.image, item?.images) ||
                           "https://via.placeholder.com/50"
                         }
                         alt={item.title}
