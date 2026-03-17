@@ -33,7 +33,7 @@ const Carts = () => {
         const { title, id, category } = project;
         const image =
           getPrimaryImage(project?.image, project?.images) ||
-          "https://via.placeholder.com/120";
+          "https://placehold.co/120";
 
         return (
           <div

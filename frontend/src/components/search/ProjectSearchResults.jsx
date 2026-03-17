@@ -50,7 +50,7 @@ const ProjectSearchResults = ({
           item.thumbnail,
           item.cover,
           item.images
-        ) || "https://via.placeholder.com/96";
+        ) || "https://placehold.co/96";
       return {
         id,
         title,
@@ -110,7 +110,7 @@ const ProjectSearchResults = ({
                   alt={project.title}
                   className="h-full w-full object-cover"
                   onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/96";
+                    e.target.src = "https://placehold.co/96";
                   }}
                 />
               </div>

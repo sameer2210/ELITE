@@ -85,7 +85,7 @@ const normalizeIdList = (value) => {
   return value.filter((id) => mongoose.isValidObjectId(id));
 };
 
-projectSchema.pre("validate", function (next) {
+projectSchema.pre("validate", function () {
   const imagesModified = this.isModified("images");
   const imageModified = this.isModified("image");
   const categoryModified = this.isModified("category");
@@ -119,8 +119,6 @@ projectSchema.pre("validate", function (next) {
       this.images = [];
     }
   }
-
-  next();
 });
 
 projectSchema.virtual("id").get(function () {

@@ -167,11 +167,11 @@ const ProjectDetails = () => {
                       <img
                         src={
                           imageList[selectedImage] ||
-                          "https://via.placeholder.com/400"
+                          "https://placehold.co/400"
                         }
                         alt={project.title}
                         className="w-full h-80 object-cover rounded"
-                        onError={(e) => (e.target.src = "https://via.placeholder.com/400")}
+                        onError={(e) => (e.target.src = "https://placehold.co/400")}
                       />
                   </div>
                   {imageList.length > 1 && (
@@ -284,12 +284,12 @@ const ProjectDetails = () => {
                       <img
                         src={
                           getPrimaryImage(item?.image, item?.images) ||
-                          "https://via.placeholder.com/50"
+                          "https://placehold.co/50"
                         }
                         alt={item.title}
                         className="w-12 h-12 rounded object-cover"
                         onError={(e) =>
-                          (e.target.src = "https://via.placeholder.com/50")
+                          (e.target.src = "https://placehold.co/50")
                         }
                       />
                       <div>

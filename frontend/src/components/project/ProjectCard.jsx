@@ -9,7 +9,7 @@ const ProjectCard = ({ p }) => {
 
   const image =
     getPrimaryImage(p?.image, p?.images) ||
-    "https://via.placeholder.com/600x450?text=Project+Preview";
+    "https://placehold.co/600x450?text=Project+Preview";
   const title = p?.title || "Untitled Project";
   const description = p?.description || "No description available.";
   const category =
@@ -61,7 +61,7 @@ const ProjectCard = ({ p }) => {
             alt={title}
             onError={(e) => {
               e.target.src =
-                "https://via.placeholder.com/600x450?text=Project+Preview";
+                "https://placehold.co/600x450?text=Project+Preview";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
