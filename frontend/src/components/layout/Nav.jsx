@@ -142,11 +142,13 @@ const Nav = () => {
   const { user } = useSelector((state) => state.userReducer);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showDesktopSubNav, setShowDesktopSubNav] = useState(true);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [notificationCount] = useState(2);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [openMobileSections, setOpenMobileSections] = useState(() => new Set());
+  const lastScrollYRef = useRef(0);
   const dispatch = useDispatch();
   const menuItems = useMemo(
     () => NAV_ORDER.map((key) => ({ key, ...NAVIGATION[key] })),
@@ -172,7 +174,25 @@ const Nav = () => {
   } = useProjectSearch({ minChars: 2, limit: 8, debounceMs: 250 });
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollYRef.current;
+
+      setScrolled(currentScrollY > 10);
+
+      if (currentScrollY < 24) {
+        setShowDesktopSubNav(true);
+      } else if (delta > 6) {
+        setShowDesktopSubNav(false);
+        setActiveDropdown(null);
+      } else if (delta < -6) {
+        setShowDesktopSubNav(true);
+      }
+
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    lastScrollYRef.current = window.scrollY;
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -256,7 +276,7 @@ const Nav = () => {
       {/* Main Navigation */}
       <nav
         className={`sticky top-0 z-50 transition-all duration-300 ease-out relative
-          ${scrolled ? ' bg-stone-950/95 backdrop-blur-xl shadow-md' : 'bg-stone-950 '} `}
+          ${scrolled ? 'bg-stone-950/95 backdrop-blur-xl shadow-md shadow-black/20 border-b border-white/10' : 'bg-stone-950'} `}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Mobile Header */}
@@ -392,7 +412,7 @@ const Nav = () => {
           </div>
 
           {/* Desktop Header */}
-          <div className="hidden md:grid grid-cols-[auto_1fr_auto] items-center py-4">
+          <div className="hidden md:grid grid-cols-[auto_1fr_auto] items-start gap-5 py-3">
             <NavLink to="/" className="inline-flex items-center gap-2">
               <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.35em] uppercase text-white">
                 ÉLITE
@@ -401,7 +421,7 @@ const Nav = () => {
             </NavLink>
 
             {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-col items-center justify-center pb-4 gap-3">
+            <div className="hidden md:flex flex-col items-center justify-center gap-2.5 px-2 pt-0.5">
               <ProjectSearchBar
                 query={searchQuery}
                 onQueryChange={setSearchQuery}
@@ -417,7 +437,7 @@ const Nav = () => {
                     key={suggestion}
                     type="button"
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="px-3 py-1 text-[11px] font-semibold tracking-wide uppercase text-white/70 border border-white/10 rounded-full hover:text-white hover:border-white/30 transition"
+                    className="px-3 py-1 text-[10px] font-semibold tracking-[0.16em] uppercase text-white/70 border border-white/15 rounded-full hover:text-white hover:border-white/35 transition"
                   >
                     {suggestion}
                   </button>
@@ -425,7 +445,7 @@ const Nav = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end space-x-2">
+            <div className="flex items-center justify-end space-x-1.5 pt-0.5">
               {user ? (
                 <div className="relative dropdown-container">
                   <button
@@ -539,13 +559,19 @@ const Nav = () => {
           </div>
 
           {/* Desktop Navigation Menu */}
-          <div className="hidden md:flex items-center justify-center border-t border-white/10 py-3">
+          <div
+            className={`hidden md:flex items-center justify-center overflow-hidden transition-all duration-300 ease-out ${
+              showDesktopSubNav
+                ? 'max-h-20 py-3 opacity-100 border-t border-white/10'
+                : 'max-h-0 py-0 opacity-0 border-t border-transparent pointer-events-none'
+            }`}
+          >
             <div
-              className="flex items-center divide-x divide-white/15 dropdown-container"
+              className="flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2 divide-x divide-white/15 dropdown-container"
               onMouseLeave={handleMouseLeave}
             >
               {menuItems.map((menuItem) => (
-                <div key={menuItem.key} className="px-4">
+                <div key={menuItem.key} className="px-3.5">
                   <NavDropdown
                     menuItem={menuItem}
                     activeDropdown={activeDropdown}
@@ -557,7 +583,7 @@ const Nav = () => {
           </div>
 
           {/* Desktop Mega Menu */}
-          {activeDropdownData && (
+          {showDesktopSubNav && activeDropdownData && (
             <div
               className="absolute left-0 right-0 top-full mt-2 bg-stone-950/95 backdrop-blur-xl shadow-2xl animate-in slide-in-from-top-4 duration-300 z-50 dropdown-container"
               onMouseEnter={() => clearTimeout(dropdownTimeoutRef.current)}
