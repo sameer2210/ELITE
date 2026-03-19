@@ -5,6 +5,7 @@ import Auth from "./Auth";
 import Unauth from "./Unauth";
 import Carts from "../pages/cart/Cart";
 import Settings from "../pages/user/Settings";
+import Notifications from "../pages/user/Notifications";
 import ProjectCreate from "../pages/admin/ProjectCreate";
 import ProjectDetails from "../pages/project/ProjectDetails";
 import ProjectsPage from "../pages/project/ProjectsPage";
@@ -38,6 +39,7 @@ const Mainroutes = () => {
         <Route path="/submit" element={<Auth><ProjectCreate /></Auth>} />
         <Route path="/projects/:id" element={<Auth><ProjectDetails /></Auth>} />
         <Route path="/saved" element={<Auth><Carts /></Auth>} />
+        <Route path="/notifications" element={<Auth><Notifications /></Auth>} />
 
         {/* Unauthenticated Only */}
         <Route path="/signin" element={<Unauth><Signin /></Unauth>} />

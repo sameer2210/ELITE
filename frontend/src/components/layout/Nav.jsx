@@ -6,6 +6,7 @@ import { asynclogoutuser } from '../../store/actions/userActions';
 import { useProjectSearch } from '../../hooks/projectHook/useProjectSearch';
 import ProjectSearchBar from '../search/ProjectSearchBar';
 import ProjectSearchOverlay from '../search/ProjectSearchOverlay';
+import { useHasUnreadNotifications } from '../../api/notifications';
 import {
   NAVIGATION,
   NAV_ORDER,
@@ -144,7 +145,6 @@ const Nav = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showDesktopSubNav, setShowDesktopSubNav] = useState(true);
   const [isSearchOpen, setSearchOpen] = useState(false);
-  const [notificationCount] = useState(2);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [openMobileSections, setOpenMobileSections] = useState(() => new Set());
@@ -172,6 +172,9 @@ const Nav = () => {
     minChars: searchMinChars,
     clear: clearSearch,
   } = useProjectSearch({ minChars: 2, limit: 8, debounceMs: 250 });
+  const { data: hasUnreadNotifications = false } = useHasUnreadNotifications({
+    userId: user?.id,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -394,10 +397,11 @@ const Nav = () => {
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" strokeWidth={1.5} />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {notificationCount}
-                  </span>
+                {hasUnreadNotifications && (
+                  <span
+                    className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-teal-400 ring-2 ring-stone-950"
+                    aria-hidden="true"
+                  />
                 )}
               </NavLink>
 
@@ -541,10 +545,11 @@ const Nav = () => {
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" strokeWidth={1.5} />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {notificationCount}
-                  </span>
+                {hasUnreadNotifications && (
+                  <span
+                    className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-teal-400 ring-2 ring-stone-950"
+                    aria-hidden="true"
+                  />
                 )}
               </NavLink>
 
