@@ -421,7 +421,7 @@ const Nav = () => {
               <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.35em] uppercase text-white">
                 ÉLITE
               </span>
-          
+
             </NavLink>
 
             {/* Search Bar - Desktop */}

@@ -94,9 +94,13 @@ export const useInfiniteProjects = ({
   limit = 6,
   populate = DEFAULT_POPULATE,
   filters,
+  sort,
 } = {}) =>
   useInfiniteQuery({
-    queryKey: ["projects", { search, limit, populate, filters, mode: "infinite" }],
+    queryKey: [
+      "projects",
+      { search, limit, populate, filters, sort, mode: "infinite" },
+    ],
     queryFn: ({ pageParam = 0, signal }) =>
       fetchProjects({
         search,
@@ -104,6 +108,7 @@ export const useInfiniteProjects = ({
         start: pageParam,
         populate,
         filters,
+        sort,
         signal,
       }),
     getNextPageParam: (lastPage, allPages) => {

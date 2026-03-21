@@ -237,8 +237,8 @@ export const NAVIGATION = {
     },
   },
   submit: {
-    label: "Submit Site",
-    path: "/submit",
+    label: "Projects",
+    path: "/projects",
     mega: null,
     mobile: {
       items: [],
