@@ -24,6 +24,10 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
+const NAV_REVEAL_TOP_OFFSET = 24;
+const NAV_HIDE_SCROLL_DISTANCE = 72;
+const NAV_SHOW_SCROLL_DISTANCE = 36;
+
 const NavDropdown = memo(({ menuItem, activeDropdown, handleMouseEnter }) => {
   const isActive = activeDropdown === menuItem.key;
   const hasMega = Boolean(menuItem.mega);
@@ -148,11 +152,15 @@ const Nav = () => {
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [openMobileSections, setOpenMobileSections] = useState(() => new Set());
+  const scrollRafRef = useRef(null);
   const lastScrollYRef = useRef(0);
+  const lastToggleYRef = useRef(0);
+  const desktopSubNavVisibleRef = useRef(true);
+  const scrollUiStateRef = useRef({ scrolled: false });
   const dispatch = useDispatch();
   const menuItems = useMemo(
     () => NAV_ORDER.map((key) => ({ key, ...NAVIGATION[key] })),
-    [NAV_ORDER, NAVIGATION]
+    []
   );
   const activeMenu = useMemo(
     () => (activeDropdown ? NAVIGATION[activeDropdown] : null),
@@ -161,7 +169,7 @@ const Nav = () => {
   const activeDropdownData = activeMenu?.mega || null;
   const searchSuggestions = useMemo(
     () => SEARCH_SUGGESTIONS,
-    [SEARCH_SUGGESTIONS]
+    []
   );
   const {
     query: searchQuery,
@@ -177,27 +185,84 @@ const Nav = () => {
   });
 
   useEffect(() => {
-    const handleScroll = () => {
+    const updateFromScroll = () => {
       const currentScrollY = window.scrollY;
-      const delta = currentScrollY - lastScrollYRef.current;
+      const nextScrolled = currentScrollY > 10;
 
-      setScrolled(currentScrollY > 10);
-
-      if (currentScrollY < 24) {
-        setShowDesktopSubNav(true);
-      } else if (delta > 6) {
-        setShowDesktopSubNav(false);
-        setActiveDropdown(null);
-      } else if (delta < -6) {
-        setShowDesktopSubNav(true);
+      if (scrollUiStateRef.current.scrolled !== nextScrolled) {
+        scrollUiStateRef.current.scrolled = nextScrolled;
+        setScrolled(nextScrolled);
       }
 
+      const isDesktop = window.innerWidth >= 768;
+      if (!isDesktop) {
+        lastScrollYRef.current = currentScrollY;
+        if (!desktopSubNavVisibleRef.current) {
+          desktopSubNavVisibleRef.current = true;
+          setShowDesktopSubNav(true);
+        }
+        return;
+      }
+
+      const delta = currentScrollY - lastScrollYRef.current;
       lastScrollYRef.current = currentScrollY;
+      if (Math.abs(delta) < 2) return;
+
+      if (currentScrollY <= NAV_REVEAL_TOP_OFFSET) {
+        lastToggleYRef.current = currentScrollY;
+        if (!desktopSubNavVisibleRef.current) {
+          desktopSubNavVisibleRef.current = true;
+          setShowDesktopSubNav(true);
+        }
+        return;
+      }
+
+      if (
+        delta > 0 &&
+        desktopSubNavVisibleRef.current &&
+        currentScrollY - lastToggleYRef.current >= NAV_HIDE_SCROLL_DISTANCE
+      ) {
+        desktopSubNavVisibleRef.current = false;
+        lastToggleYRef.current = currentScrollY;
+        setShowDesktopSubNav(false);
+        setActiveDropdown(null);
+        return;
+      }
+
+      if (
+        delta < 0 &&
+        !desktopSubNavVisibleRef.current &&
+        lastToggleYRef.current - currentScrollY >= NAV_SHOW_SCROLL_DISTANCE
+      ) {
+        desktopSubNavVisibleRef.current = true;
+        lastToggleYRef.current = currentScrollY;
+        setShowDesktopSubNav(true);
+      }
     };
 
-    lastScrollYRef.current = window.scrollY;
+    const handleScroll = () => {
+      if (scrollRafRef.current !== null) return;
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        scrollRafRef.current = null;
+        updateFromScroll();
+      });
+    };
+
+    const initialScrollY = window.scrollY;
+    lastScrollYRef.current = initialScrollY;
+    lastToggleYRef.current = initialScrollY;
+    scrollUiStateRef.current.scrolled = initialScrollY > 10;
+    desktopSubNavVisibleRef.current = true;
+    setScrolled(scrollUiStateRef.current.scrolled);
+    setShowDesktopSubNav(true);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -236,7 +301,7 @@ const Nav = () => {
         setActiveDropdown(null);
       }
     },
-    [activeDropdown, NAVIGATION]
+    [activeDropdown]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -278,8 +343,9 @@ const Nav = () => {
     <>
       {/* Main Navigation */}
       <nav
-        className={`sticky top-0 z-50 transition-all duration-300 ease-out relative
-          ${scrolled ? 'bg-stone-950/95 backdrop-blur-xl shadow-md shadow-black/20 border-b border-white/10' : 'bg-stone-950'} `}
+        style={{ position: 'sticky' }}
+        className={`relative top-0 z-[200] nav-shell backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 ease-out
+          ${scrolled ? 'bg-stone-950/95 shadow-md shadow-black/20 border-b border-white/10' : 'bg-stone-950/90 border-b border-transparent'} `}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Mobile Header */}
@@ -319,7 +385,7 @@ const Nav = () => {
                     <User className="w-5 h-5" strokeWidth={1.5} />
                   </button>
                   {isUserMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-52 bg-stone-950 rounded-lg shadow-xl border border-gray-800 p-2 animate-in slide-in-from-top-2 z-2">
+                    <div className="absolute top-full right-0 mt-2 w-52 bg-stone-950 rounded-lg shadow-xl border border-gray-800 p-2 animate-in slide-in-from-top-2 z-[220] nav-transition-layer">
                       <div className="px-3 py-2 border-b border-gray-700">
                         <div className="text-sm font-medium text-white">{user.name || 'User'}</div>
                         <div className="text-xs text-gray-400">
@@ -467,7 +533,7 @@ const Nav = () => {
                     <User className="w-5 h-5" strokeWidth={1.5} />
                   </button>
                   {isUserMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-52 bg-stone-950 rounded-lg shadow-xl border border-gray-800 p-2 animate-in slide-in-from-top-2 z-2">
+                    <div className="absolute top-full right-0 mt-2 w-52 bg-stone-950 rounded-lg shadow-xl border border-gray-800 p-2 animate-in slide-in-from-top-2 z-[220] nav-transition-layer">
                       <div className="px-3 py-2 border-b border-gray-700">
                         <div className="text-sm font-medium text-white">{user.name || 'User'}</div>
                         <div className="text-xs text-gray-400">
@@ -565,32 +631,34 @@ const Nav = () => {
 
           {/* Desktop Navigation Menu */}
           <div
-            className={`hidden md:flex items-center justify-center overflow-hidden transition-all duration-300 ease-out ${
+            className={`hidden md:flex items-center justify-center overflow-hidden transform-gpu nav-transition-layer transition-[height,opacity,transform,border-color] duration-300 ease-out ${
               showDesktopSubNav
-                ? 'max-h-20 py-3 opacity-100 border-t border-white/10'
-                : 'max-h-0 py-0 opacity-0 border-t border-transparent pointer-events-none'
+                ? 'h-[58px] opacity-100 translate-y-0 border-t border-white/10'
+                : 'h-0 opacity-0 -translate-y-2 border-t border-transparent pointer-events-none'
             }`}
           >
-            <div
-              className="flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2 divide-x divide-white/15 dropdown-container"
-              onMouseLeave={handleMouseLeave}
-            >
-              {menuItems.map((menuItem) => (
-                <div key={menuItem.key} className="px-3.5">
-                  <NavDropdown
-                    menuItem={menuItem}
-                    activeDropdown={activeDropdown}
-                    handleMouseEnter={handleMouseEnter}
-                  />
-                </div>
-              ))}
+            <div className="h-[58px] flex items-center justify-center">
+              <div
+                className="flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2 divide-x divide-white/15 dropdown-container"
+                onMouseLeave={handleMouseLeave}
+              >
+                {menuItems.map((menuItem) => (
+                  <div key={menuItem.key} className="px-3.5">
+                    <NavDropdown
+                      menuItem={menuItem}
+                      activeDropdown={activeDropdown}
+                      handleMouseEnter={handleMouseEnter}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Desktop Mega Menu */}
           {showDesktopSubNav && activeDropdownData && (
             <div
-              className="absolute left-0 right-0 top-full mt-2 bg-stone-950/95 backdrop-blur-xl shadow-2xl animate-in slide-in-from-top-4 duration-300 z-50 dropdown-container"
+              className="absolute left-0 right-0 top-full mt-2 bg-stone-950/95 backdrop-blur-xl shadow-2xl animate-in slide-in-from-top-4 duration-300 z-[210] dropdown-container transform-gpu nav-transition-layer"
               onMouseEnter={() => clearTimeout(dropdownTimeoutRef.current)}
               onMouseLeave={handleMouseLeave}
             >

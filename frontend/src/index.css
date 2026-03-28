@@ -18,3 +18,15 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+.nav-shell {
+  will-change: background-color, border-color, box-shadow;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.nav-transition-layer {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
