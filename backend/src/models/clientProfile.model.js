@@ -37,6 +37,23 @@ const clientProfileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+clientProfileSchema.index({ industry: 1 });
+clientProfileSchema.index({ companySize: 1 });
+clientProfileSchema.index({ location: 1 });
+clientProfileSchema.index({ createdAt: -1 });
+clientProfileSchema.index(
+  {
+    companyName: "text",
+    industry: "text",
+    location: "text",
+    description: "text",
+  },
+  {
+    weights: { companyName: 7, industry: 5, location: 2, description: 3 },
+    name: "client_profile_text_search_idx",
+  }
+);
+
 const ClientProfile = mongoose.model("ClientProfile", clientProfileSchema);
 
 export default ClientProfile;

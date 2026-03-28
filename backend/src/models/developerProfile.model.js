@@ -85,6 +85,17 @@ const developerProfileSchema = new mongoose.Schema(
 );
 
 developerProfileSchema.index({ skills: 1 });
+developerProfileSchema.index({ technologies: 1 });
+developerProfileSchema.index({ availability: 1 });
+developerProfileSchema.index({ location: 1 });
+developerProfileSchema.index({ createdAt: -1 });
+developerProfileSchema.index(
+  { title: "text", bio: "text", skills: "text", location: "text" },
+  {
+    weights: { title: 6, skills: 5, bio: 3, location: 1 },
+    name: "developer_profile_text_search_idx",
+  }
+);
 
 const DeveloperProfile = mongoose.model(
   "DeveloperProfile",

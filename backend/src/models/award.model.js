@@ -32,6 +32,18 @@ const awardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+awardSchema.index({ type: 1 });
+awardSchema.index({ projectId: 1 });
+awardSchema.index({ developerId: 1 });
+awardSchema.index({ year: -1 });
+awardSchema.index(
+  { name: "text", type: "text" },
+  {
+    weights: { name: 8, type: 4 },
+    name: "award_text_search_idx",
+  }
+);
+
 const Award = mongoose.model("Award", awardSchema);
 
 export default Award;

@@ -32,6 +32,16 @@ const reviewSchema = new mongoose.Schema(
 );
 
 reviewSchema.index({ developerId: 1 });
+reviewSchema.index({ clientId: 1 });
+reviewSchema.index({ projectRequestId: 1 });
+reviewSchema.index({ rating: 1 });
+reviewSchema.index(
+  { comment: "text" },
+  {
+    weights: { comment: 5 },
+    name: "review_text_search_idx",
+  }
+);
 
 const Review = mongoose.model("Review", reviewSchema);
 

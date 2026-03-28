@@ -50,6 +50,17 @@ const projectRequestSchema = new mongoose.Schema(
 );
 
 projectRequestSchema.index({ technologies: 1 });
+projectRequestSchema.index({ clientId: 1 });
+projectRequestSchema.index({ category: 1 });
+projectRequestSchema.index({ status: 1 });
+projectRequestSchema.index({ createdAt: -1 });
+projectRequestSchema.index(
+  { title: "text", description: "text" },
+  {
+    weights: { title: 8, description: 4 },
+    name: "project_request_text_search_idx",
+  }
+);
 
 const ProjectRequest = mongoose.model("ProjectRequest", projectRequestSchema);
 

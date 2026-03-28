@@ -66,6 +66,17 @@ const projectSchema = new mongoose.Schema(
 );
 
 projectSchema.index({ technologies: 1 });
+projectSchema.index({ developerId: 1 });
+projectSchema.index({ category: 1 });
+projectSchema.index({ awards: 1 });
+projectSchema.index({ createdAt: -1 });
+projectSchema.index(
+  { title: "text", description: "text" },
+  {
+    weights: { title: 8, description: 4 },
+    name: "project_text_search_idx",
+  }
+);
 
 const normalizeImages = (value) => {
   if (!value) return [];
