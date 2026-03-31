@@ -43,6 +43,44 @@ const buildParams = ({
   return params;
 };
 
+const isFileLike = (value) =>
+  typeof File !== "undefined" && value instanceof File;
+
+const isFileListLike = (value) =>
+  typeof FileList !== "undefined" && value instanceof FileList;
+
+const extractImageFile = (payload = {}) => {
+  const raw = payload.imageFile;
+  if (!raw) return null;
+  if (isFileLike(raw)) return raw;
+  if (isFileListLike(raw)) return raw[0] || null;
+  if (Array.isArray(raw)) return raw[0] || null;
+  return null;
+};
+
+const buildRequestBody = (payload = {}) => {
+  const imageFile = extractImageFile(payload);
+  if (!imageFile) return payload;
+
+  const body = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    if (key === "imageFile") return;
+    if (value === undefined || value === null || value === "") return;
+
+    if (Array.isArray(value)) {
+      value
+        .filter((item) => item !== undefined && item !== null && item !== "")
+        .forEach((item) => body.append(`${key}[]`, item));
+      return;
+    }
+
+    body.append(key, value);
+  });
+
+  body.append("image", imageFile);
+  return body;
+};
+
 const fetchProjects = async ({
   search,
   page,
@@ -136,7 +174,7 @@ export const useCreateProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload) => {
-      const { data } = await http.post("/api/projects", payload);
+      const { data } = await http.post("/api/projects", buildRequestBody(payload));
       return data;
     },
     onSuccess: (created) => {
@@ -155,7 +193,10 @@ export const useUpdateProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, payload }) => {
-      const { data } = await http.patch(`/api/projects/${id}`, payload);
+      const { data } = await http.patch(
+        `/api/projects/${id}`,
+        buildRequestBody(payload)
+      );
       return data;
     },
     onSuccess: (updated, variables) => {

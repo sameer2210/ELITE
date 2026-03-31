@@ -2,6 +2,7 @@ import {
   Save,
   Trash2,
   Image,
+  Upload,
   FileText,
   Tag,
   Link2,
@@ -12,7 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "../common/Button";
 
 const InputField = ({ label, icon: Icon, error, children, required }) => (
@@ -159,7 +160,29 @@ const ProjectForm = ({
   }, [defaultValues, reset]);
 
   const watchedImage = watch("image");
+  const watchedImageFile = watch("imageFile");
   const watchedImages = watch("images") || [];
+  const [filePreviewUrl, setFilePreviewUrl] = useState("");
+
+  const selectedImageFile = Array.isArray(watchedImageFile)
+    ? watchedImageFile[0]
+    : watchedImageFile?.[0] || null;
+
+  useEffect(() => {
+    if (!selectedImageFile) {
+      setFilePreviewUrl("");
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(selectedImageFile);
+    setFilePreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [selectedImageFile]);
+
+  const mainPreviewImage =
+    filePreviewUrl ||
+    (typeof watchedImage === "string" ? watchedImage.trim() : "");
+
   const previewImages = Array.isArray(watchedImages)
     ? watchedImages.filter((value) => typeof value === "string" && value.trim())
     : [];
@@ -171,11 +194,11 @@ const ProjectForm = ({
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-          {(watchedImage || previewImages.length > 0) && (
+          {(mainPreviewImage || previewImages.length > 0) && (
             <div className="flex flex-col items-center gap-3">
-              {watchedImage && (
+              {mainPreviewImage && (
                 <img
-                  src={watchedImage}
+                  src={mainPreviewImage}
                   alt="Project preview"
                   className="w-28 h-28 object-cover rounded-lg border border-gray-200"
                   onError={(e) => e.target.classList.add("hidden")}
@@ -199,7 +222,16 @@ const ProjectForm = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <InputField label="Feed Image" icon={Image} error={errors.image}>
+              <InputField label="Upload Cover Image" icon={Upload} error={errors.imageFile}>
+                <input
+                  {...register("imageFile")}
+                  type="file"
+                  accept="image/*"
+                  className={`${inputStyles} file:mr-3 file:rounded file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white`}
+                />
+              </InputField>
+
+              <InputField label="Cover Image URL (optional)" icon={Image} error={errors.image}>
                 <input
                   {...register("image", {
                     pattern: {
@@ -207,7 +239,7 @@ const ProjectForm = ({
                       message: "Please enter a valid image URL",
                     },
                   })}
-                  placeholder="https://example.com/feed.jpg"
+                  placeholder="https://example.com/cover.jpg"
                   type="url"
                   className={inputStyles}
                 />

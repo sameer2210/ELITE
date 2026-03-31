@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { s3 } from "../config/Aws.js";
 
 const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
 
@@ -273,6 +275,22 @@ const pickAllowed = (payload, allowedFields) => {
 
 const isAdmin = (req) => req.user && req.user.role === "admin";
 
+const deleteS3Object = async (key) => {
+  const bucket = process.env.AWS_BUCKET_NAME;
+  if (!bucket || !key) return;
+
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      })
+    );
+  } catch (error) {
+    console.error(`Failed to delete S3 object: ${key}`, error);
+  }
+};
+
 const ensureOwner = (doc, req, ownerField) => {
   if (!ownerField || isAdmin(req)) return true;
   const ownerId = doc?.[ownerField]?.toString();
@@ -388,16 +406,26 @@ export const buildCrudController = (
   const create = async (req, res, next) => {
     try {
       let payload = sanitizePayload(req.body || {}, req, ownerField, allowedFields);
+
       if (assignOwnerOnCreate) {
         payload = assignOwner(payload, req, ownerField, allowAdminOverride);
       }
+
+      if (req.file) {
+        const uploadedUrl = req.file.location;
+        payload.image = uploadedUrl;
+        payload.images = [uploadedUrl];
+        payload.imageKey = req.file.key;
+      }
+
       const created = await Model.create(payload);
+
       res.status(201).json(created);
     } catch (error) {
       next(error);
     }
   };
-
+  
   const update = async (req, res, next) => {
     try {
       const doc = await Model.findById(req.params.id);
@@ -410,8 +438,23 @@ export const buildCrudController = (
         throw new Error("Not authorized to update this resource");
       }
       const updates = sanitizePayload(req.body || {}, req, ownerField, allowedFields);
+      let previousImageKey = null;
+
+      if (req.file) {
+        previousImageKey = doc.imageKey || null;
+        const uploadedUrl = req.file.location;
+        updates.image = uploadedUrl;
+        updates.images = [uploadedUrl];
+        updates.imageKey = req.file.key;
+      }
+
       Object.assign(doc, updates);
       const updated = await doc.save();
+
+      if (req.file && previousImageKey && previousImageKey !== updated.imageKey) {
+        await deleteS3Object(previousImageKey);
+      }
+
       res.json(updated);
     } catch (error) {
       next(error);
@@ -429,7 +472,14 @@ export const buildCrudController = (
         res.status(403);
         throw new Error("Not authorized to delete this resource");
       }
+
+      const imageKeyToDelete = doc.imageKey || null;
       await doc.deleteOne();
+
+      if (imageKeyToDelete) {
+        await deleteS3Object(imageKeyToDelete);
+      }
+
       res.json({ message: `${resourceName} deleted`, id: req.params.id });
     } catch (error) {
       next(error);

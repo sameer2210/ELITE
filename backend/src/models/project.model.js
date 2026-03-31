@@ -37,6 +37,10 @@ const projectSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    imageKey: {
+      type: String,
+      trim: true,
+    },
     liveDemo: {
       type: String,
       trim: true,

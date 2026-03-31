@@ -18,6 +18,7 @@ const ProjectCreate = () => {
 
   const defaultValues = useMemo(
     () => ({
+      imageFile: null,
       image: "",
       images: [""],
       title: "",

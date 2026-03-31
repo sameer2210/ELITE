@@ -35,9 +35,24 @@ const normalizeImageList = (value) => {
 
 const unique = (items) => Array.from(new Set(items));
 
+const isFileLike = (value) =>
+  typeof File !== "undefined" && value instanceof File;
+
+const isFileListLike = (value) =>
+  typeof FileList !== "undefined" && value instanceof FileList;
+
+const extractImageFile = (value) => {
+  if (!value) return null;
+  if (isFileLike(value)) return value;
+  if (isFileListLike(value)) return value[0] || null;
+  if (Array.isArray(value)) return value[0] || null;
+  return null;
+};
+
 export const buildProjectPayload = (formData = {}) => {
   const title = formData.title?.trim() || "";
   const description = formData.description?.trim() || "";
+  const imageFile = extractImageFile(formData.imageFile);
 
   const coverImage = formData.image?.trim() || formData.coverImage?.trim();
   const gallerySource =
@@ -71,6 +86,8 @@ export const buildProjectPayload = (formData = {}) => {
   const githubRepo = formData.githubRepo?.trim();
   if (githubRepo) payload.githubRepo = githubRepo;
 
+  if (imageFile) payload.imageFile = imageFile;
+
   return payload;
 };
 
@@ -95,6 +112,7 @@ export const buildProjectFormDefaults = (project = {}) => {
   const defaults = {
     title: project.title || "",
     description: project.description || "",
+    imageFile: null,
     image: rawImages[0] || "",
     images: rawImages.slice(1),
     category: isValidObjectId(categoryId) ? categoryId : "",
