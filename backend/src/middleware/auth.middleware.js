@@ -1,14 +1,17 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import { getAuthCookieName } from "../utils/authCookie.js";
 
 export const protect = async (req, res, next) => {
   try {
-    // Get token from Authorization header
+    const cookieToken = req.cookies?.[getAuthCookieName()];
     const authHeader = req.headers.authorization;
-    const token =
-      authHeader && authHeader.startsWith("Bearer")
+    const bearerToken =
+      authHeader && authHeader.startsWith("Bearer ")
         ? authHeader.split(" ")[1]
         : null;
+
+    const token = cookieToken || bearerToken;
 
     if (!token) {
       return res.status(401).json({ message: "Not Authorized, no token" });

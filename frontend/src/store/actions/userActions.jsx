@@ -51,6 +51,11 @@ const persistUser = (user, fallback, dispatch) => {
   return normalized;
 };
 
+const clearClientAuthState = () => {
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+};
+
 const getErrorMessage = (error, fallback) => {
   return error?.response?.data?.message || fallback;
 };
@@ -74,22 +79,14 @@ const buildProfilePayload = (user = {}) => {
 export const asynccurrentuser = () => async (dispatch) => {
   dispatch(SetLoading(true));
   try {
-    const token = localStorage.getItem("token");
     const storedUser = getStoredUser();
-
-    if (!token) {
-      localStorage.removeItem("user");
-      dispatch(LogoutUser());
-      return;
-    }
-
     const { data } = await axios.get("/api/user/profile");
     persistUser(data, storedUser, dispatch);
-  } catch (error) {
-    console.error("Failed to restore session:", error);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+  } catch {
+    clearClientAuthState();
     dispatch(LogoutUser());
+  } finally {
+    dispatch(SetLoading(false));
   }
 };
 
@@ -101,18 +98,30 @@ export const asyncsigninuser = (user) => async (dispatch) => {
       role: user.role,
     };
     const { data } = await axios.post("/api/auth/signin", payload);
-
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-    }
-
     const storedUser = getStoredUser();
     persistUser(data, storedUser, dispatch);
+    localStorage.removeItem("token");
     toast.success("Logged in successfully!");
-    console.log("Login success:", data);
   } catch (error) {
-    console.error("Login error userAction.jsx:", error);
     toast.error(getErrorMessage(error, "Wrong email or password"));
+  }
+};
+
+export const asyncGoogleSignin = (payload) => async (dispatch) => {
+  try {
+    const { data } = await axios.post("/api/auth/google", payload);
+    const storedUser = getStoredUser();
+    persistUser(data, storedUser, dispatch);
+    localStorage.removeItem("token");
+    toast.success("Logged in with Google successfully!");
+    return data;
+  } catch (error) {
+    const message = getErrorMessage(
+      error,
+      "Google login failed. Please try again."
+    );
+    toast.error(message);
+    throw new Error(message);
   }
 };
 
@@ -126,35 +135,29 @@ export const asyncsignupuser = (user) => async (dispatch) => {
     };
 
     const { data } = await axios.post("/api/auth/signup", payload);
-
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-    }
-
     const storedUser = getStoredUser();
     persistUser({ ...user, ...data }, storedUser, dispatch);
+    localStorage.removeItem("token");
     toast.success("Registered successfully!");
-    console.log("User registered:", data);
   } catch (error) {
-    console.error("Signup error:", error);
     toast.error(getErrorMessage(error, "Something went wrong during signup"));
   }
 };
 
 export const asynclogoutuser = () => async (dispatch) => {
   try {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    await axios.post("/api/auth/logout");
+  } catch (error) {
+    console.error("Server logout failed:", error);
+  } finally {
+    clearClientAuthState();
     dispatch(LogoutUser());
     toast.success("Logged out successfully!");
-    console.log("User logged out.");
-  } catch (error) {
-    console.error("Logout failed:", error);
-    toast.error("Something went wrong during logout");
   }
 };
 
-export const asyncupdateuser = (id, user) => async (dispatch) => {
+export const asyncupdateuser = (userId, user) => async (dispatch) => {
+  void userId;
   try {
     const payload = buildProfilePayload(user);
     const { data } = await axios.put("/api/user/profile", payload);
@@ -163,29 +166,23 @@ export const asyncupdateuser = (id, user) => async (dispatch) => {
       const storedUser = getStoredUser();
       persistUser({ ...storedUser, ...user, ...data }, storedUser, dispatch);
       toast.success("Profile updated successfully!");
-      console.log("User updated:", data);
     } else {
       toast.error("Failed to update user profile.");
-      console.warn("Empty response received while updating user.");
     }
   } catch (error) {
-    console.error("Update error:", error);
     toast.error(
       getErrorMessage(error, "Error updating profile. Please try again.")
     );
   }
 };
 
-export const asyncdeleteuser = (id) => async (dispatch) => {
+export const asyncdeleteuser = () => async (dispatch) => {
   try {
     await axios.delete("/api/user/profile");
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    clearClientAuthState();
     dispatch(LogoutUser());
     toast.success("Your account has been deleted.");
-    console.log("User deleted successfully!");
   } catch (error) {
-    console.error("Failed to delete user:", error);
     toast.error(
       getErrorMessage(error, "Failed to delete account. Please try again.")
     );

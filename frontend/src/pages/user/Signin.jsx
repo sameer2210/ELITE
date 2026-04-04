@@ -3,18 +3,30 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { asyncsigninuser } from "../../store/actions/userActions";
 import { useForm } from "react-hook-form";
+import GoogleLoginButton from "../../components/auth/GoogleLoginButton";
+import useGoogleAuth from "../../hooks/auth/useGoogleAuth";
 
 const Signin = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.userReducer);
   const [showPassword, setShowPassword] = useState(false);
+  const {
+    loginWithGoogle,
+    isLoading: isGoogleLoading,
+    error: googleError,
+    clearError: clearGoogleError,
+    setErrorMessage: setGoogleErrorMessage,
+  } = useGoogleAuth();
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting, isValid },
-  } = useForm({ mode: "onChange", defaultValues: { role: "client" } });
+  } = useForm({ mode: "onChange", defaultValues: { role: "" } });
+
+  const selectedRole = watch("role");
 
   useEffect(() => {
     if (user) {
@@ -22,8 +34,18 @@ const Signin = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (selectedRole) {
+      clearGoogleError();
+    }
+  }, [selectedRole, clearGoogleError]);
+
   const SigninHandler = async (formData) => {
     await dispatch(asyncsigninuser(formData));
+  };
+
+  const handleGoogleCredential = async (credential) => {
+    await loginWithGoogle({ idToken: credential, role: selectedRole });
   };
 
   return (
@@ -118,9 +140,12 @@ const Signin = () => {
                   </label>
                   <select
                     id="signin-role"
-                    {...register("role")}
+                    {...register("role", { required: "Select account type first" })}
                     className="w-full text-white bg-slate-800/60 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-400/60 focus:border-transparent transition-all"
                   >
+                    <option value="" className="text-gray-900">
+                      Select account type
+                    </option>
                     <option value="client" className="text-gray-900">
                       Client
                     </option>
@@ -128,6 +153,9 @@ const Signin = () => {
                       Developer
                     </option>
                   </select>
+                  {errors.role && (
+                    <p className="text-xs text-red-300">{errors.role.message}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -154,6 +182,25 @@ const Signin = () => {
                 >
                   {isSubmitting ? "Signing in..." : "Sign in"}
                 </button>
+
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-transparent px-3 text-xs uppercase tracking-[0.2em] text-white/50">
+                      or
+                    </span>
+                  </div>
+                </div>
+
+                <GoogleLoginButton
+                  selectedRole={selectedRole}
+                  isLoading={isGoogleLoading}
+                  errorMessage={googleError}
+                  onCredentialSuccess={handleGoogleCredential}
+                  onGoogleUiError={setGoogleErrorMessage}
+                />
               </form>
 
               <div className="mt-6 text-center">
